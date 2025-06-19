@@ -1,0 +1,1 @@
+export { LandingHexagonSection } from "./ui/LandingHexagonSection";
