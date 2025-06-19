@@ -1,14 +1,17 @@
-import { useEffect, useRef, type MouseEvent } from 'react'
+import { useEffect, useRef, useState, type MouseEvent } from 'react'
 
 interface TUseCanvas {
   draw:        (context: CanvasRenderingContext2D) => void;
-  onMouseMove: (e: MouseEvent<HTMLCanvasElement, MouseEvent>) => void
+  onResize:    () => void;
+  onMouseMove: (mousePosition: {x: number, y: number}) => void;
 }
 
 export const useCanvas = (props: TUseCanvas) => {
-  const { draw, onMouseMove } = props;
+  const { draw, onMouseMove, onResize } = props;
 
   const canvasRef = useRef<HTMLCanvasElement>(null);
+
+  const [mousePosition, setMousePosition] = useState({x: 0, y: 0});
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -17,17 +20,32 @@ export const useCanvas = (props: TUseCanvas) => {
       const handleResize = () => {
         canvas.width  = window.innerWidth;
         canvas.height = window.innerHeight;
+
+        onResize();
       };
 
-      window.addEventListener('mousemove', onMouseMove);
-      window.addEventListener('resize',    handleResize);
+      window.addEventListener('resize', handleResize);
 
-      return () => {
-        window.removeEventListener('mousemove', onMouseMove);
-        window.removeEventListener('resize',    handleResize)
-      };
+      return () => window.removeEventListener('resize', handleResize);
     }
-  }, [ onMouseMove ])
+  }, [onResize])
+
+  useEffect(() => {
+    const mouseMoveHandler = (e: MouseEvent<HTMLCanvasElement, MouseEvent>) => {
+      setMousePosition({x: e.clientX, y: e.clientY});
+    };
+
+    window.addEventListener('mousemove', mouseMoveHandler);
+
+    const intervalId = setInterval(() => {
+      onMouseMove(mousePosition);
+    }, 10)
+
+    return () => {
+      clearInterval(intervalId);
+      window.removeEventListener('mousemove', mouseMoveHandler)
+    };
+  }, [ onMouseMove, mousePosition ])
 
   useEffect(() => {
     const canvas  = canvasRef.current;

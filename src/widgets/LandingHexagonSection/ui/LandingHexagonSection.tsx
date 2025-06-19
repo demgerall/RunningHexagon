@@ -14,13 +14,23 @@ import HEXAGON5             from "@/shared/assets/svg/Hexagon5.svg";
 import style                from './LandingHexagonSection.module.scss';
 
 export const LandingHexagonSection = () => {
+  const getFiguresOptions = () => [
+    { x: -102,                        y: -193                         },
+    { x: window.innerWidth - 234,     y: 0                            },
+    { x: window.innerWidth / 2 - 538, y: window.innerHeight - 159     },
+    { x: window.innerWidth / 2 + 85,  y: window.innerHeight / 2 + 196 },
+    { x: window.innerWidth / 2 + 322, y: window.innerHeight / 2 + 210 }
+  ]
+
   const svgImagesRef = useRef<Array<SvgCanvasElement>>([
-    new SvgCanvasElement(<HEXAGON1 />),
-    new SvgCanvasElement(<HEXAGON2 />, { x: window.innerWidth - 234 }),
-    new SvgCanvasElement(<HEXAGON3 />, { x: 414, y: window.innerHeight - 159 }),
-    new SvgCanvasElement(<HEXAGON4 />, { x: 1061, y: 420 }),
-    new SvgCanvasElement(<HEXAGON5 />, { x: 1325, y: 434 })
-  ]);
+      new SvgCanvasElement(<HEXAGON1 />, {direction: "pull"}),
+      new SvgCanvasElement(<HEXAGON2 />, {direction: "pull"}),
+      new SvgCanvasElement(<HEXAGON3 />, {direction: "pull"}),
+      new SvgCanvasElement(<HEXAGON4 />),
+      new SvgCanvasElement(<HEXAGON5 />)
+    ]
+    .map((svgImage, index) => svgImage.setPosition(getFiguresOptions()[index].x, getFiguresOptions()[index].y))
+  );
 
   const handleRenderSvgImages = (context: CanvasRenderingContext2D) => {
     // biome-ignore lint/complexity/noForEach: <explanation>
@@ -29,24 +39,24 @@ export const LandingHexagonSection = () => {
     })
   }
 
-  const handleMouseMove = (setMousePosition: ({x, y}: {x: number, y: number}) => void) =>
-    (e: MouseEvent<HTMLCanvasElement, MouseEvent>) =>
-      {
-    setMousePosition({ x: e.clientX, y: e.clientY });
-  }
-
-  const animateSvgImages = (mousePosition: {x: number, y: number}) => {
+  const handleMouseMove = (mousePosition: {x: number, y: number}) => {
     // biome-ignore lint/complexity/noForEach: <explanation>
     svgImagesRef.current.forEach(svgImage => {
       svgImage.update(mousePosition.x, mousePosition.y);
     });
   }
 
+  const handleResize = () => {
+    svgImagesRef.current.forEach((svgImage, index) => {
+      svgImage.setPosition(getFiguresOptions()[index].x, getFiguresOptions()[index].y);
+    });
+  }
+
   return (
     <section className = {style.section}>
       <Canvas
-        animateMouseMove = {animateSvgImages}
         handleMouseMove  = {handleMouseMove}
+        handleResize     = {handleResize}
         draw             = {handleRenderSvgImages}
         id               = 'canvas'
       />

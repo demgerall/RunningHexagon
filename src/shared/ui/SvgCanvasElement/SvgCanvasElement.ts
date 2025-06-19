@@ -5,6 +5,7 @@ import { svgToImage }        from '@/shared/libs/svgToImage/svgToImage';
 interface TSvgCanvasElementOptions {
   maxDistance?: number;
   mouseRadius?: number;
+  direction?:   'pull' | 'push';
   backSpeed?:   number;
   force?:       number;
   x?:           number;
@@ -12,17 +13,18 @@ interface TSvgCanvasElementOptions {
 }
 
 export class SvgCanvasElement {
-  svgImage?:   HTMLImageElement;
-  centerX?:    number | undefined;
-  centerY?:    number | undefined;
-  maxDistance: number;
-  mouseRadius: number;
-  originalX:   number;
-  originalY:   number;
-  backSpeed:   number;
-  currentX:    number;
-  currentY:    number;
-  force:       number;
+  private svgImage?:   HTMLImageElement;
+  private centerX?:    number;
+  private centerY?:    number;
+  private maxDistance: number;
+  private mouseRadius: number;
+  private originalX:   number;
+  private originalY:   number;
+  private backSpeed:   number;
+  private currentX:    number;
+  private currentY:    number;
+  private force:       number;
+  private direction:   'pull' | 'push';
 
   constructor(svgElement: ReactElement, options?: TSvgCanvasElementOptions) {
     const {
@@ -30,20 +32,42 @@ export class SvgCanvasElement {
       y           = 0,
       maxDistance = 15,
       mouseRadius = 300,
-      force       = 250,
-      backSpeed   = 0.05
+      backSpeed   = 0.05,
+      direction   = 'push',
+      force       = 0.004
     } = options || {};
 
     this.prepareSvg(svgElement);
 
-    this.originalX   = x;
-    this.originalY   = y;
-    this.currentX    = x;
-    this.currentY    = y;
+    this.originalX = x;
+    this.originalY = y;
+    this.currentX  = x;
+    this.currentY  = y;
+
+    this.setSvgImageCenter();
+
     this.maxDistance = maxDistance;
     this.mouseRadius = mouseRadius;
-    this.force       = 1 / force;
     this.backSpeed   = backSpeed;
+    this.direction   = direction;
+    this.force       = force;
+  };
+
+  setPosition(x: number, y: number) {
+    this.originalX = x;
+    this.originalY = y;
+    this.currentX  = x;
+    this.currentY  = y;
+
+    this.setSvgImageCenter();
+
+    return this;
+  };
+
+  setDirection(direction: 'pull' | 'push') {
+    this.direction = direction;
+
+    return this;
   };
 
   private setSvgImageCenter() {
@@ -51,7 +75,7 @@ export class SvgCanvasElement {
       return;
     }
 
-    this.centerX = this.currentX + this.svgImage.width / 2;
+    this.centerX = this.currentX + this.svgImage.width  / 2;
     this.centerY = this.currentY + this.svgImage.height / 2;
   };
 
@@ -81,27 +105,39 @@ export class SvgCanvasElement {
     const dx               = this.centerX - mouseX;
     const dy               = this.centerY - mouseY;
     const distance         = Math.sqrt(dx ** 2 + dy ** 2);
-    const reactionDistance = this.svgImage.width / 2 + this.mouseRadius;
+    const reactionDistance = (this.svgImage.width > this.svgImage.height ? this.svgImage.width : this.svgImage.height) / 2
+      + this.mouseRadius;
 
-    if (
-      distance <= reactionDistance                                      &&
-      Math.abs(this.originalX - this.currentX) < this.maxDistance &&
-      Math.abs(this.originalY - this.currentY) < this.maxDistance
-    ) {
+    if (distance <= reactionDistance) {
       const force = (reactionDistance - distance) * this.force;
       const angle = Math.atan2(dy, dx);
 
-      this.currentX += Math.cos(angle) * force;
-      this.currentY += Math.sin(angle) * force;
+      const offsetX = Math.cos(angle) * force;
+      const offsetY = Math.sin(angle) * force;
 
-      this.setSvgImageCenter();
+      if (
+        this.direction === 'pull'                                                                       &&
+        Math.abs(this.originalX + this.svgImage.width  / 2 - offsetX - this.centerX) < this.maxDistance &&
+        Math.abs(this.originalY + this.svgImage.height / 2 - offsetY - this.centerY) < this.maxDistance
+      ) {
+        this.currentX -= offsetX;
+        this.currentY -= offsetY;
+      }
+      if (
+        this.direction === 'push'                                                                       &&
+        Math.abs(this.originalX + this.svgImage.width  / 2 + offsetX - this.centerX) < this.maxDistance &&
+        Math.abs(this.originalY + this.svgImage.height / 2 + offsetY - this.centerY) < this.maxDistance
+      ) {
+        this.currentX += offsetX;
+        this.currentY += offsetY;
+      }
     }
 
     if (this.currentX !== this.originalX || this.currentY !== this.originalY) {
       this.currentX += (this.originalX - this.currentX) * this.backSpeed;
       this.currentY += (this.originalY - this.currentY) * this.backSpeed;
-
-      this.setSvgImageCenter();
     }
+    
+    this.setSvgImageCenter();
   };
 }

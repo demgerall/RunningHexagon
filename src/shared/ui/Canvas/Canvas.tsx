@@ -13,9 +13,8 @@ import style         from './Canvas.module.scss';
 interface TCanvas extends HTMLAttributes<HTMLCanvasElement> {
   id:                string;
   draw:              (context: CanvasRenderingContext2D) => void;
-  handleMouseMove?:  (setMousePosition: ({x, y}: {x: number, y: number}) => void) =>
-    (e: MouseEvent<HTMLCanvasElement, MouseEvent>) => void;
-  animateMouseMove?: (mousePosition: {x: number, y: number}) => void;
+  handleMouseMove?:  (mousePosition: {x: number, y: number}) => void;
+  handleResize?:     () => void;
   width?:            number;
   height?:           number;
   bgColor?:          string;
@@ -25,22 +24,14 @@ export const Canvas = (props: TCanvas) => {
   const {
     id,
     draw,
-    handleMouseMove,
-    animateMouseMove = _.noop,
+    handleMouseMove  = _.noop,
+    handleResize     = _.noop,
     width            = window.innerWidth,
     height           = window.innerHeight,
     ...otherProps
   } = props;
 
-  const [mousePosition, setMousePosition] = useState({x: 0, y: 0});
-
-  const onMouseMove = handleMouseMove ? handleMouseMove(setMousePosition) : _.noop;
-
-  const canvasRef = useCanvas({draw, onMouseMove});
-
-  useEffect(() => {
-    animateMouseMove(mousePosition);
-  }, [ animateMouseMove, mousePosition ])
+  const canvasRef = useCanvas({draw, onMouseMove: handleMouseMove, onResize: handleResize});
 
   return (
     <canvas
