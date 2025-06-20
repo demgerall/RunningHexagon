@@ -24,22 +24,26 @@ export const Canvas = (props: TCanvas) => {
   const {
     id,
     draw,
-    handleMouseMove  = _.noop,
-    handleResize     = _.noop,
-    width            = window.innerWidth,
-    height           = window.innerHeight,
+    handleMouseMove = _.noop,
+    handleResize    = _.noop,
+    width           = window.innerWidth,
+    height          = window.innerHeight,
     ...otherProps
   } = props;
 
-  const canvasRef = useCanvas({draw, onMouseMove: handleMouseMove, onResize: handleResize});
+  const canvasRef = useCanvas({
+    draw,
+    onMouseMove: handleMouseMove,
+    onResize: handleResize
+  });
 
   return (
     <canvas
-      className   = {style.canvas}
-      height      = {height}
-      width       = {width}
-      ref         = {canvasRef}
-      id          = {id}
+      className = {style.canvas}
+      height    = {height}
+      width     = {width}
+      ref       = {canvasRef}
+      id        = {id}
       {...otherProps}
     />
   );

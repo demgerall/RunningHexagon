@@ -105,8 +105,8 @@ export class SvgCanvasElement {
     const dx               = this.centerX - mouseX;
     const dy               = this.centerY - mouseY;
     const distance         = Math.sqrt(dx ** 2 + dy ** 2);
-    const reactionDistance = (this.svgImage.width > this.svgImage.height ? this.svgImage.width : this.svgImage.height) / 2
-      + this.mouseRadius;
+    const svgDistance      = (this.svgImage.width > this.svgImage.height ? this.svgImage.width : this.svgImage.height) / 2
+    const reactionDistance = svgDistance + this.mouseRadius;
 
     if (distance <= reactionDistance) {
       const force = (reactionDistance - distance) * this.force;
@@ -133,7 +133,7 @@ export class SvgCanvasElement {
       }
     }
 
-    if (this.currentX !== this.originalX || this.currentY !== this.originalY) {
+    if (distance > svgDistance + this.maxDistance && (this.currentX !== this.originalX || this.currentY !== this.originalY)) {
       this.currentX += (this.originalX - this.currentX) * this.backSpeed;
       this.currentY += (this.originalY - this.currentY) * this.backSpeed;
     }

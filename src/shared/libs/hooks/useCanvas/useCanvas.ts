@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, type MouseEvent } from 'react'
+import { useEffect, useRef, useState } from 'react'
 
 interface TUseCanvas {
   draw:        (context: CanvasRenderingContext2D) => void;
@@ -31,7 +31,7 @@ export const useCanvas = (props: TUseCanvas) => {
   }, [onResize])
 
   useEffect(() => {
-    const mouseMoveHandler = (e: MouseEvent<HTMLCanvasElement, MouseEvent>) => {
+    const mouseMoveHandler = (e: MouseEvent) => {
       setMousePosition({x: e.clientX, y: e.clientY});
     };
 
@@ -39,7 +39,7 @@ export const useCanvas = (props: TUseCanvas) => {
 
     const intervalId = setInterval(() => {
       onMouseMove(mousePosition);
-    }, 10)
+    }, 13)
 
     return () => {
       clearInterval(intervalId);
