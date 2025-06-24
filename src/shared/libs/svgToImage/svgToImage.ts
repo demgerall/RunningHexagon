@@ -1,63 +1,71 @@
 import type { ReactElement } from "react";
-import { createRoot }        from "react-dom/client";
+import  ReactDOM         from "react-dom";
 
-export const svgToImage = async ( svgElement: ReactElement ): Promise<HTMLImageElement> => {
-  const tempDiv = document.createElement('div');
-  document.body.appendChild(tempDiv);
-  const root    = createRoot(tempDiv);
-  root.render(svgElement);
+export const svgToImage = (svgElement: React.ReactElement): Promise<HTMLImageElement> => {
+  return new Promise((resolve, reject) => {
+    // Создаем временный контейнер
+    const tempDiv = document.createElement('div');
+    
+    // Стили для изоляции контейнера
+    tempDiv.style.position = 'fixed';
+    tempDiv.style.top = '0';
+    tempDiv.style.left = '0';
+    tempDiv.style.width = '0';
+    tempDiv.style.height = '0';
+    tempDiv.style.overflow = 'hidden';
+    
+    document.body.appendChild(tempDiv);
 
-  return new Promise<HTMLImageElement>((resolve, reject) => {
-    const observer = new MutationObserver((mutations, obs) => {
-      const svgNode = tempDiv.querySelector('svg');
-      if (svgNode) {
-        obs.disconnect();
+    // Рендерим SVG с помощью React 16 API
+    ReactDOM.render(svgElement, tempDiv, () => {
+      // Callback вызывается после завершения рендеринга
+      setTimeout(() => {
+        const svgNode = tempDiv.querySelector('svg');
+        
+        if (!svgNode) {
+          cleanup();
+          return reject(new Error('SVG element not found'));
+        }
 
         try {
           const svgString = new XMLSerializer().serializeToString(svgNode);
-          const svgBlob   = new Blob([svgString], { type: 'image/svg+xml' });
-          const svgUrl    = URL.createObjectURL(svgBlob);
+          const svgBlob = new Blob([svgString], { type: 'image/svg+xml' });
+          const svgUrl = URL.createObjectURL(svgBlob);
 
           const img = new Image();
-
-          img.onload  = ()    => {
+          
+          img.onload = () => {
+            cleanup();
             resolve(img);
-            URL.revokeObjectURL(svgUrl);
-            root.unmount();
-            document.body.removeChild(tempDiv);
           };
-          img.onerror = (err) => {
-            reject(new Error('Image loading failed'));
-            URL.revokeObjectURL(svgUrl);
-            root.unmount();
-            document.body.removeChild(tempDiv);
+          
+          img.onerror = () => {
+            cleanup();
+            reject(new Error('Failed to load SVG image'));
           };
-
+          
           img.src = svgUrl;
         } catch (error) {
+          cleanup();
           reject(error);
-          root.unmount();
-          document.body.removeChild(tempDiv);
         }
-      }
+      }, 50); // Небольшая задержка для гарантии рендеринга
     });
 
-    observer.observe(tempDiv, {
-      childList:     true,
-      subtree:       true,
-      attributes:    true,
-      characterData: true
-    });
+    const cleanup = () => {
+      ReactDOM.unmountComponentAtNode(tempDiv);
+    };
 
+    // Таймаут на случай проблем с рендерингом
     const timeout = setTimeout(() => {
-      observer.disconnect();
-      reject(new Error('SVG element not found within timeout'));
-      root.unmount();
-    }, 1000);
+      cleanup();
+      reject(new Error('SVG rendering timeout'));
+    }, 3000);
 
+    // Очистка при размонтировании
     return () => {
       clearTimeout(timeout);
-      observer.disconnect();
+      cleanup();
     };
   });
-}
+};

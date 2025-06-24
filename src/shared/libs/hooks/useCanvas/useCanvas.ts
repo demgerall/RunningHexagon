@@ -39,7 +39,7 @@ export const useCanvas = (props: TUseCanvas) => {
 
     const intervalId = setInterval(() => {
       onMouseMove(mousePosition);
-    }, 13)
+    }, 1)
 
     return () => {
       clearInterval(intervalId);

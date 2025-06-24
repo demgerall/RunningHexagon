@@ -1,7 +1,4 @@
-import React, {
-  useRef,
-  type MouseEvent
-}                           from 'react';
+import React, { useRef }    from 'react';
 
 import { Canvas }           from '@/shared/ui/Canvas';
 import { SvgCanvasElement } from '@/shared/ui/SvgCanvasElement';
