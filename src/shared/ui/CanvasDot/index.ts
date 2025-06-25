@@ -1,0 +1,1 @@
+export { CanvasDot } from "./CanvasDot";

@@ -54,6 +54,7 @@ export const svgToImage = (svgElement: React.ReactElement): Promise<HTMLImageEle
 
     const cleanup = () => {
       ReactDOM.unmountComponentAtNode(tempDiv);
+      tempDiv.remove();
     };
 
     // Таймаут на случай проблем с рендерингом
